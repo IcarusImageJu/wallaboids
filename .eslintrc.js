@@ -21,6 +21,9 @@ module.exports = {
     '@typescript-eslint',
   ],
   settings: {
+    'import/resolver': {
+      typescript: {},
+    },
     react: {
       version: '17',
     },
@@ -42,23 +45,14 @@ module.exports = {
     ],
     'react/no-unused-prop-types': 0,
     'import/export': 0,
-    'import/order': [
+    'import/extensions': [
       'error',
+      'ignorePackages',
       {
-        groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
-        pathGroups: [
-          {
-            pattern: 'react',
-            group: 'external',
-            position: 'before',
-          },
-        ],
-        pathGroupsExcludedImportTypes: ['react'],
-        'newlines-between': 'always',
-        alphabetize: {
-          order: 'asc',
-          caseInsensitive: true,
-        },
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
       },
     ],
   },
