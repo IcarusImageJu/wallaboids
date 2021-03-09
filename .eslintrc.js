@@ -45,6 +45,7 @@ module.exports = {
     ],
     'react/no-unused-prop-types': 0,
     'import/export': 0,
+    'func-names': ['error', 'as-needed'],
     'import/extensions': [
       'error',
       'ignorePackages',
