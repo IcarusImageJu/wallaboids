@@ -1,7 +1,8 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import p5Types, { Vector } from 'p5'; // Import this for typechecking and intellisense
 import Sketch from 'react-p5';
+import './index.css';
 
 type BoidProps = {
   p5: p5Types
@@ -19,10 +20,10 @@ class Boid {
 
   maxSpeed: number;
 
+  trails: Vector[];
+
   constructor (props: BoidProps) {
     this.p5 = props.p5;
-    // eslint-disable-next-line max-len
-    // this.position = this.p5.createVector(this.p5.random(this.p5.width), this.p5.random(this.p5.height), 0);
     this.position = p5Types.Vector.random2D();
     this.position.setMag(props.p5.random(props.p5.width, props.p5.height));
     this.velocity = p5Types.Vector.random2D();
@@ -30,7 +31,8 @@ class Boid {
     this.acceleration = p5Types.Vector.random2D();
     this.maxForce = 1;
     this.maxSpeed = 4;
-    this.show();
+    this.show(this.position);
+    this.trails = [];
   }
 
   edges() {
@@ -48,7 +50,7 @@ class Boid {
 
   align(flock: Boid[]) {
     const perceptionRadius = 50;
-    const steering = this.p5.createVector();
+    const steering = new p5Types.Vector();
     let total = 0;
     flock.forEach((otherBoid) => {
       const d = this.p5.dist(
@@ -74,7 +76,7 @@ class Boid {
 
   separation(flock: Boid[]) {
     const perceptionRadius = 50;
-    const steering = this.p5.createVector();
+    const steering = new p5Types.Vector();
     let total = 0;
     flock.forEach((otherBoid) => {
       const d = this.p5.dist(
@@ -102,7 +104,7 @@ class Boid {
 
   cohesion(flock: Boid[]) {
     const perceptionRadius = 50;
-    const steering = this.p5.createVector();
+    const steering = new p5Types.Vector();
     let total = 0;
     flock.forEach((otherBoid) => {
       const d = this.p5.dist(
@@ -132,33 +134,52 @@ class Boid {
     const sepration = this.separation(flock);
     const cohesion = this.cohesion(flock);
 
+    alignement.mult(0.9);
+    sepration.mult(0.9);
+    cohesion.mult(0.8);
+
     this.acceleration.add(alignement);
     this.acceleration.add(sepration);
     this.acceleration.add(cohesion);
+  }
+
+  trail() {
+    const { position } = this;
+
+    if (this.trails.length > 9) {
+      this.trails.pop();
+    }
+
+    this.trails = [position.copy(), ...this.trails];
+
+    this.trails.forEach((trail) => {
+      this.show(trail);
+    });
   }
 
   update(flock: Boid[]) {
     this.edges();
     this.flocking(flock);
 
+    this.trail();
+
     this.position.add(this.velocity);
 
-    // Bug on acceleration cumulation for now
-    // this.velocity.add(this.acceleration);
+    this.velocity.add(this.acceleration);
     this.velocity.limit(this.maxSpeed);
     this.acceleration.mult(0);
-    this.show();
+    this.show(this.position);
   }
 
-  show() {
+  show(position: Vector) {
     this.p5.strokeWeight(2);
     this.p5.stroke(255);
-    this.p5.point(this.position.x, this.position.y);
+    this.p5.point(position.x, position.y);
   }
 }
 
 const Canvas:FC = function() {
-  const [count] = useState<number>(20);
+  const [count] = useState<number>(500);
   const [flock, setFlock] = useState<Boid[]>([]);
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.colorMode('hsb', 360, 100, 100, 1);

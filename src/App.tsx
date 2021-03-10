@@ -1,11 +1,11 @@
-import React, { FC, useState } from 'react';
+import { FC, useState } from 'react';
 
 import './App.css';
 import Canvas from './Canvas';
 import Html from './Html';
 
 const App:FC = function() {
-  const [mode, setMode] = useState<'canvas'|'html'|undefined>();
+  const [mode, setMode] = useState<'canvas'|'html'|undefined>('canvas');
 
   switch (mode) {
     case 'canvas':
