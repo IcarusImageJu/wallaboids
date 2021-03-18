@@ -38,7 +38,7 @@ export default class Boid {
       this.show(this.position);
       this.trails = [];
       this.perceptionRadius = 50;
-      this.trailSize = 20;
+      this.trailSize = 100;
       this.size = 2;
       this.sOffset = 3;
     }
@@ -57,100 +57,57 @@ export default class Boid {
       }
     }
 
-    // Align boid with other
-    align(flock: Boid[]) {
-      const steering = new p5Types.Vector();
-      let total = 0;
-      flock.forEach((otherBoid) => {
-        const d = this.p5.dist(
-          this.position.x,
-          this.position.y,
-          otherBoid.position.x,
-          otherBoid.position.y,
-        );
-        if (otherBoid !== this && d < this.perceptionRadius) {
-          steering.add(otherBoid.velocity);
-          total += 1;
-        }
-      });
-
-      if (total > 0) {
-        steering.div(total);
-        steering.setMag(this.maxSpeed);
-        steering.sub(this.velocity);
-        steering.limit(this.maxForce);
-      }
-      return steering;
-    }
-
-    // Separate boid from other
-    separation(flock: Boid[]) {
-      const steering = new p5Types.Vector();
-      let total = 0;
-      flock.forEach((otherBoid) => {
-        const d = this.p5.dist(
-          this.position.x,
-          this.position.y,
-          otherBoid.position.x,
-          otherBoid.position.y,
-        );
-        if (otherBoid !== this && d < this.perceptionRadius) {
-          const diff = p5Types.Vector.sub(this.position, otherBoid.position);
-          diff.div(d * d);
-          steering.add(diff);
-          total += 1;
-        }
-      });
-
-      if (total > 0) {
-        steering.div(total);
-        steering.setMag(this.maxSpeed);
-        steering.sub(this.velocity);
-        steering.limit(this.maxForce);
-      }
-      return steering;
-    }
-
-    // follow other boid
-    cohesion(flock: Boid[]) {
-      const steering = new p5Types.Vector();
-      let total = 0;
-      flock.forEach((otherBoid) => {
-        const d = this.p5.dist(
-          this.position.x,
-          this.position.y,
-          otherBoid.position.x,
-          otherBoid.position.y,
-        );
-        if (otherBoid !== this && d < this.perceptionRadius) {
-          steering.add(otherBoid.position);
-          total += 1;
-        }
-      });
-
-      if (total > 0) {
-        steering.div(total);
-        steering.sub(this.position);
-        steering.setMag(this.maxSpeed);
-        steering.sub(this.velocity);
-        steering.limit(this.maxForce);
-      }
-      return steering;
-    }
-
     // Be consious of other boids
     flocking(flock: Boid[]) {
-      const alignement = this.align(flock);
-      const sepration = this.separation(flock);
-      const cohesion = this.cohesion(flock);
+      const alignement = new p5Types.Vector();
+      const separation = new p5Types.Vector();
+      const cohesion = new p5Types.Vector();
+      let total = 0;
 
-      alignement.mult(0.9);
-      sepration.mult(0.9);
-      cohesion.mult(0.8);
+      flock.forEach((otherBoid) => {
+        const d = this.p5.dist(
+          this.position.x,
+          this.position.y,
+          otherBoid.position.x,
+          otherBoid.position.y,
+        );
+        if (otherBoid !== this && d < this.perceptionRadius) {
+          // cohesion
+          cohesion.add(otherBoid.position);
+          // separation
+          const diff = p5Types.Vector.sub(this.position, otherBoid.position);
+          diff.div(d * d);
+          separation.add(diff);
+          // alignement
+          alignement.add(otherBoid.velocity);
+          total += 1;
+        }
+      });
 
-      this.acceleration.add(alignement);
-      this.acceleration.add(sepration);
-      this.acceleration.add(cohesion);
+      if (total > 0) {
+        // cohesion
+        cohesion.div(total);
+        cohesion.sub(this.position);
+        cohesion.setMag(this.maxSpeed);
+        cohesion.sub(this.velocity);
+        cohesion.limit(this.maxForce);
+        cohesion.mult(0.8);
+        this.acceleration.add(cohesion);
+        // separation
+        separation.div(total);
+        separation.setMag(this.maxSpeed);
+        separation.sub(this.velocity);
+        separation.limit(this.maxForce);
+        separation.mult(0.9);
+        this.acceleration.add(separation);
+        // alignement
+        alignement.div(total);
+        alignement.setMag(this.maxSpeed);
+        alignement.sub(this.velocity);
+        alignement.limit(this.maxForce);
+        alignement.mult(0.9);
+        this.acceleration.add(alignement);
+      }
     }
 
     // Let a path
